@@ -22,20 +22,20 @@ WITH diff_hours
            , document_type
            , document_identification
         FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
-        GROUP BY ivr_id, document_type, document_identification
-        HAVING (document_type <> 'UNKNOWN' AND document_identification <> 'UNKNOWN'))
+       WHERE document_identification <> 'UNKNOWN'
+     QUALIFY ROW_NUMBER() OVER (PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY document_identification) = 1)
     , phone_cleaning
   AS (SELECT ivr_id
            , customer_phone
         FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
-        GROUP BY ivr_id, customer_phone
-        HAVING customer_phone <> 'UNKNOWN')
+       WHERE customer_phone <> 'UNKNOWN'
+      QUALIFY ROW_NUMBER() OVER(PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY customer_phone) = 1)
     , billing_cleaning
   AS (SELECT ivr_id
            , billing_account_id
         FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
-        GROUP BY ivr_id, billing_account_id
-        HAVING billing_account_id <> 'UNKNOWN' AND billing_account_id IS NOT NULL)
+       WHERE billing_account_id <> 'UNKNOWN' AND billing_account_id IS NOT NULL
+      QUALIFY ROW_NUMBER() OVER(PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY billing_account_id) = 1)
 
 SELECT detail.ivr_id
      , detail.phone_number
@@ -51,7 +51,7 @@ SELECT detail.ivr_id
      , COALESCE(dni_cleaning.document_type, 'UNKNOWN') AS document_type
      , COALESCE(dni_cleaning.document_identification, 'UNKNOWN') AS document_identification
      , COALESCE(phone_cleaning.customer_phone, 'UNKNOWN') AS customer_phone
-     --, COALESCE(billing_cleaning.billing_account_id, 'UNKNOWN') AS billing_account_id
+     , COALESCE(billing_cleaning.billing_account_id, 'UNKNOWN') AS billing_account_id
      , MAX(IF(detail.module_name = 'AVERIA_MASIVA', 1, 0)) AS masiva_lg 
      , MAX(IF(detail.step_name = 'CUSTOMERINFOBYPHONE.TX' AND detail.step_description_error = 'UNKNOWN',1,0)) AS info_by_phone_lg
      , MAX(IF(detail.step_name = 'CUSTOMERINFOBYDNI.TX' AND detail.step_description_error = 'UNKNOWN',1,0)) AS info_by_dni_lg
@@ -87,6 +87,6 @@ GROUP BY detail.ivr_id
     , document_type
     , document_identification
     , customer_phone
-    --, billing_account_id
+    , billing_account_id
     , diff_hours.repeated_phone_24h
     , diff_hours.cause_recall_phone_24h

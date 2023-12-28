@@ -1,3 +1,11 @@
+-- Limpieza de tablas antes de ejecutar la Query
+DROP TABLE IF EXISTS purchase;
+DROP TABLE IF EXISTS course;
+DROP TABLE IF EXISTS subject;
+DROP TABLE IF EXISTS content;
+DROP TABLE IF EXISTS teacher;
+DROP TABLE IF EXISTS student;
+
 -- Crear la tabla student
 CREATE TABLE student (
     student_id SERIAL PRIMARY KEY,

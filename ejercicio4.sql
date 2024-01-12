@@ -16,24 +16,24 @@ WITH diff_hours
                   WHEN STARTS_WITH(vdn_label,'ABSORPTION') THEN 'ABSORPTION'
                   ELSE 'RESTO'
                   END AS vdn_aggregation
-        FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_calls`) 
+        FROM `keepcoding.ivr_calls`) 
     , dni_cleaning
   AS (SELECT ivr_id
            , document_type
            , document_identification
-        FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
+        FROM `keepcoding.ivr_detail`
        WHERE document_identification <> 'UNKNOWN'
      QUALIFY ROW_NUMBER() OVER (PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY document_identification) = 1)
     , phone_cleaning
   AS (SELECT ivr_id
            , customer_phone
-        FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
+        FROM `keepcoding.ivr_detail`
        WHERE customer_phone <> 'UNKNOWN'
       QUALIFY ROW_NUMBER() OVER(PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY customer_phone) = 1)
     , billing_cleaning
   AS (SELECT ivr_id
            , billing_account_id
-        FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail`
+        FROM `keepcoding.ivr_detail`
        WHERE billing_account_id <> 'UNKNOWN' AND billing_account_id IS NOT NULL
       QUALIFY ROW_NUMBER() OVER(PARTITION BY SAFE_CAST(ivr_id AS STRING) ORDER BY billing_account_id) = 1)
 
@@ -57,7 +57,7 @@ SELECT detail.ivr_id
      , MAX(IF(detail.step_name = 'CUSTOMERINFOBYDNI.TX' AND detail.step_description_error = 'UNKNOWN',1,0)) AS info_by_dni_lg
      , diff_hours.repeated_phone_24h
      , diff_hours.cause_recall_phone_24h
- FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_detail` detail
+ FROM `keepcoding.ivr_detail` detail
  LEFT
  JOIN diff_hours
    ON detail.ivr_id = diff_hours.ivr_id

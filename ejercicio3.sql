@@ -24,11 +24,11 @@ SELECT calls.ivr_id
      , steps.document_identification
      , steps.customer_phone
      , steps.billing_account_id
-  FROM `datawarehouse-keepcoding-sql.keepcoding.ivr_steps` steps
+  FROM `keepcoding.ivr_steps` steps
   LEFT
-  JOIN `datawarehouse-keepcoding-sql.keepcoding.ivr_calls` calls
+  JOIN `keepcoding.ivr_calls` calls
     ON steps.ivr_id = calls.ivr_id
   LEFT
-  JOIN `datawarehouse-keepcoding-sql.keepcoding.ivr_modules` modules
+  JOIN `keepcoding.ivr_modules` modules
     ON steps.ivr_id = modules.ivr_id
    AND steps.module_sequece = modules.module_sequece
